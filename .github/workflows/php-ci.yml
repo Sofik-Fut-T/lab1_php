@@ -34,4 +34,5 @@ jobs:
         run: php vendor/bin/pint --test
         
       - name: Run unit tests
-        run: vendor/bin/phpunit
+        run: php vendor/bin/phpunit
+        
