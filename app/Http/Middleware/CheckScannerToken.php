@@ -15,7 +15,7 @@ class CheckScannerToken
         if ($token !== 'scanner-secret-123') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized scanner device access.'
+                'message' => 'Unauthorized scanner device access.',
             ], 401);
         }
 

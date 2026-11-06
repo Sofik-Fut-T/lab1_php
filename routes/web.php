@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StockItemController;
 use App\Http\Middleware\CheckScannerToken;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
