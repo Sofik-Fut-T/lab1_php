@@ -19,7 +19,7 @@ jobs:
           php-version: '8.2'
 
       - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Demonstrate GitHub Secrets
         run: echo "Secret key is ${{ secrets.MY_SUPER_SECRET_KEY }}"
