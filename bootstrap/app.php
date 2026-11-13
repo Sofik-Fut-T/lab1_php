@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckScannerToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'scanner.token' => CheckScannerToken::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'warehouse',
+            'warehouse/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

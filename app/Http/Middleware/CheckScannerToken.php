@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -10,15 +12,17 @@ class CheckScannerToken
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->header('X-Scanner-Token');
-
-        if ($token !== 'scanner-secret-123') {
+        if ($request->isMethod('post') && ! $request->hasHeader('X-Scanner-Token')) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized scanner device access.',
-            ], 401);
+                'status' => 'access_denied',
+                'message' => 'Відхилено: відсутній обов\'язковий службовий заголовок X-Scanner-Token.',
+            ], 403);
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        $response->headers->set('X-Security-Policy', 'Enforced');
+
+        return $response;
     }
 }

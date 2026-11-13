@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:    
+    steps:
       - uses: actions/checkout@v4
 
       - name: Set up PHP
@@ -18,21 +18,17 @@ jobs:
         with:
           php-version: '8.2'
 
-      - name: Copy .env
+      - name: Copy .env file
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
       - name: Install Dependencies
-        run: composer update -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
 
-      - name: Generate key
+      - name: Generate Application Key
         run: php artisan key:generate
-
-      - name: Demonstrate GitHub Secrets
-        run: echo "Secret key is ${{ secrets.MY_SUPER_SECRET_KEY }}"
 
       - name: Lint code with Pint
         run: php vendor/bin/pint --test
-        
-      - name: Run unit tests
-        run: php vendor/bin/phpunit
-        
+
+      - name: Run Application Tests
+        run: php artisan test
