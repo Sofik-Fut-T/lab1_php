@@ -4,84 +4,82 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\StockItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class StockItemController extends Controller
 {
-    private array $items = [
-        [
-            'id' => 1,
-            'title' => 'Штрихкод Сканер Datalogic',
-            'sku' => 'SKU-1001',
-            'quantity' => 15,
-            'location_zone' => 'Zone-A1',
-        ],
-        [
-            'id' => 2,
-            'title' => 'Термінал збору даних Zebra',
-            'sku' => 'SKU-1002',
-            'quantity' => 8,
-            'location_zone' => 'Zone-B2',
-        ],
-        [
-            'id' => 3,
-            'title' => 'Принтер етикеток Xprinter',
-            'sku' => 'SKU-1003',
-            'quantity' => 3,
-            'location_zone' => 'Zone-C3',
-        ],
-    ];
-
+    /**
+     * Повертає список складських позицій із підвантаженими категорією та постачальниками (Eager Loading).
+     */
     public function index(Request $request): JsonResponse
     {
+        $items = StockItem::query()
+            ->with(['category:id,name', 'suppliers:id,name,code'])
+            ->where('is_active', true)
+            ->get();
+
         return response()->json([
             'status' => 'success',
-            'data' => $this->items,
+            'data' => $items,
         ], 200);
     }
 
+    /**
+     * Створення нової позиції на складі з прив'язкою категорії (1:M) та постачальників (M:M).
+     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'min:3', 'max:255'],
-            'sku' => ['required', 'string', 'min:3', 'max:50'],
-            'quantity' => ['required', 'integer', 'min:0'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'sku' => ['required', 'string', 'min:3', 'max:50', 'unique:stock_items,sku'],
+            'title' => ['required', 'string', 'min:2', 'max:255'],
+            'quantity' => ['required', 'integer', 'min:1'],
             'location_zone' => ['required', 'string', 'min:2', 'max:50'],
+            'is_active' => ['nullable', 'boolean'],
+            'suppliers' => ['nullable', 'array'],
+            'suppliers.*' => ['integer', 'exists:suppliers,id'],
         ]);
 
-        $newItem = [
-            'id' => count($this->items) + 1,
-            'title' => $validated['title'],
+        $item = StockItem::create([
+            'category_id' => (int) $validated['category_id'],
             'sku' => $validated['sku'],
+            'title' => $validated['title'],
             'quantity' => (int) $validated['quantity'],
             'location_zone' => $validated['location_zone'],
-        ];
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
 
-        $this->items[] = $newItem;
+        if (! empty($validated['suppliers'])) {
+            $item->suppliers()->sync($validated['suppliers']);
+        }
+
+        $item->load(['category:id,name', 'suppliers:id,name,code']);
 
         return response()->json([
             'status' => 'created',
-            'data' => $newItem,
+            'data' => $item,
         ], 201);
     }
 
+    /**
+     * Отримання конкретної товарної позиції за ID разом зі зв'язками.
+     */
     public function show(string $id): JsonResponse
     {
-        $itemId = (int) $id;
+        $item = StockItem::with(['category', 'suppliers'])->find((int) $id);
 
-        foreach ($this->items as $item) {
-            if ($item['id'] === $itemId) {
-                return response()->json([
-                    'status' => 'success',
-                    'data' => $item,
-                ], 200);
-            }
+        if (! $item) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Товар на складі з таким ID не знайдено.',
+            ], 404);
         }
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Товар на складі з таким ID не знайдено.',
-        ], 404);
+            'status' => 'success',
+            'data' => $item,
+        ], 200);
     }
 }

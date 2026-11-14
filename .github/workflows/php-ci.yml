@@ -17,15 +17,23 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: pdo_sqlite, sqlite3
 
       - name: Install Dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Prepare Environment and SQLite Database
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
 
       - name: Demonstrate GitHub Secrets
         run: echo "Secret key is ${{ secrets.MY_SUPER_SECRET_KEY }}"
 
       - name: Lint code with Pint
         run: php vendor/bin/pint --test
+
+      - name: Run Application Tests
+        run: php artisan test
         
-      - name: Run unit tests
-        run: php vendor/bin/phpunit tests/Unit/CalculatorTest.php
