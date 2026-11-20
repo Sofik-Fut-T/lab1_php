@@ -27,17 +27,13 @@ class StockItem extends Model
         'is_active' => 'boolean',
     ];
 
-    /**
-     * Зв'язок Many-to-One — товар належить до певної категорії.
-     */
+   
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Зв'язок M:M — товар постачається кількома постачальниками через таблицю stock_item_supplier.
-     */
+    
     public function suppliers(): BelongsToMany
     {
         return $this->belongsToMany(Supplier::class)->withTimestamps();
